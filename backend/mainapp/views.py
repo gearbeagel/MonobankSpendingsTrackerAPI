@@ -3,56 +3,65 @@ import time
 import hmac
 import hashlib
 import base64
+
+from django.contrib.auth import authenticate, login, logout
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import requests
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-PRIVATE_KEY = os.getenv('MONO_X_TOKEN')
-print(PRIVATE_KEY)
-
-
-def generate_signature(timestamp, url):
-    data = (timestamp + url).encode('utf-8')
-    sign = hmac.new(PRIVATE_KEY.encode('utf-8'), data, hashlib.sha256).digest()
-    signB64 = base64.b64encode(sign).decode('utf-8')
-    return signB64
-
-
-def get_current_time():
-    return str(int(time.time()))
+from .serializers import UserSerializer
 
 
 class MainView(APIView):
-    def get(self, request):
-        return Response('Hello from Mono!')
-
-
-class MonobankAuthAPIView(APIView):
+    permission_classes = [AllowAny]
 
     def get(self, request):
-        return Response('Register with your Mono account!')
+        if request.user.is_authenticated:
+            return Response({'message': 'Hello World!'})
+        else:
+            auth_links = {
+                'register': '/api/register/',
+                'login': '/api/login/',
+            }
+            return Response({
+                'message': 'Hello, please log in or register.',
+                'auth_links': auth_links
+            })
+
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        api_key_id = PRIVATE_KEY
-        print(api_key_id)
-        callback_url = "https://api.monobank.ua/personal/auth/request"
-        current_time = get_current_time()
-        sign = generate_signature(current_time, callback_url)
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(
+                {"detail": "User created successfully"},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        headers = {
-            "X-Key-Id": api_key_id,
-            "X-Time": current_time,
-            "X-Sign": sign,
-            "X-Callback": callback_url,
-        }
 
-        response = requests.post(callback_url, headers=headers)
+class LoginView(APIView):
+    permission_classes = [AllowAny]
 
-        if response.status_code == 200:
-            return Response(response.json())
-        else:
-            return Response(response.json(), status=response.status_code)
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return Response({"error": "Credentials are invalid."}, status=status.HTTP_400_BAD_REQUEST)
+        login(request, user)
+        return Response({"detail": "User logged in."}, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
+        return Response({"detail": "User logged out."}, status=status.HTTP_200_OK)

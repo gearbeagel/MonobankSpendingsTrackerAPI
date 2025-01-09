@@ -16,11 +16,6 @@ from pathlib import Path
 from configurations import Configuration
 from dotenv import load_dotenv
 
-load_dotenv()
-
-PRIVATE_KEY = os.getenv('MONO_X_TOKEN')
-
-
 class Dev(Configuration):
     BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -80,6 +75,12 @@ class Dev(Configuration):
             'HOST': os.environ["DB_HOST"],
             'PORT': os.environ["DB_PORT"],
         }
+    }
+
+    REST_FRAMEWORK = {
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+            'rest_framework.authentication.SessionAuthentication',
+        ],
     }
 
     AUTH_PASSWORD_VALIDATORS = [
