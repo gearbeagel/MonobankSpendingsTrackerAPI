@@ -35,6 +35,7 @@ class Dev(Configuration):
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
+        'mainapp'
     ]
 
     MIDDLEWARE = [
@@ -70,7 +71,7 @@ class Dev(Configuration):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'MST',
+            'NAME': os.environ["DB_NAME"],
             'USER': os.environ["DB_USER"],
             'PASSWORD': os.environ["DB_PASSWORD"],
             'HOST': os.environ["DB_HOST"],
