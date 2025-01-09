@@ -4,6 +4,7 @@ import hmac
 import hashlib
 import base64
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -21,9 +22,10 @@ class MainView(APIView):
         if request.user.is_authenticated:
             return Response({'message': 'Hello World!'})
         else:
+            host = request.build_absolute_uri('/').rstrip('/')
             auth_links = {
-                'register': '/api/register/',
-                'login': '/api/login/',
+                'register': f'{host}/api/register/',
+                'login': f'{host}/auth/login/',
             }
             return Response({
                 'message': 'Hello, please log in or register.',
@@ -33,6 +35,13 @@ class MainView(APIView):
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
+
+    def get(self, request):
+        host = request.build_absolute_uri('/').rstrip('/')
+        return Response({
+            'message': 'Join our website!',
+            'login?': f"You already have an account? Log in: {host}/auth/login/"
+        })
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -47,7 +56,6 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
