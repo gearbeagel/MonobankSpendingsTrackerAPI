@@ -6,10 +6,12 @@ ENV POETRY_VIRTUALENVS_CREATE=false
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN python -m venv /py && \
+    apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     gcc \
+    && python -m venv /py \
     && pip install --upgrade pip \
     && pip install poetry \
     && apt-get clean \
@@ -19,7 +21,7 @@ COPY pyproject.toml poetry.lock /app/
 
 RUN poetry install --no-root
 
-COPY ./backend /app
+WORKDIR /app/backend
 
 RUN adduser \
     --disabled-password \

@@ -3,9 +3,7 @@ services:
     build:
       context: .
     volumes:
-      - ./backend:/app
-      - ./pyproject.toml:/app/pyproject.toml
-      - ./poetry.lock:/app/poetry.lock
+      - ./backend:/app/backend
     ports:
       - "8000:8000"
     command: >
