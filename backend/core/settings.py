@@ -18,6 +18,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+PRIVATE_KEY = os.getenv('MONO_X_TOKEN')
+
 
 class Dev(Configuration):
     BASE_DIR = Path(__file__).resolve().parent.parent
@@ -94,6 +96,29 @@ class Dev(Configuration):
             'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
         },
     ]
+
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "colored",
+            },
+        },
+        "loggers": {
+            "": {
+                "handlers": ["console"],
+                "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            }
+        },
+        "formatters": {
+            "colored": {
+                "format": "\033[1;36m{asctime}\033[0m \033[1;32m{levelname}\033[0m - {name}: {message}",
+                "style": "{",
+            },
+        },
+    }
 
     LANGUAGE_CODE = 'en-us'
 

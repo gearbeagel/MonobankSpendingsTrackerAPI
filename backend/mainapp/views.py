@@ -7,20 +7,22 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import requests
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 PRIVATE_KEY = os.getenv('MONO_X_TOKEN')
+print(PRIVATE_KEY)
 
 
-def generate_signature(timestamp, token_or_permissions, url):
-    """Generates X-Sign for authenticating with Monobank."""
-    data = (timestamp + token_or_permissions + url).encode('utf-8')
+def generate_signature(timestamp, url):
+    data = (timestamp + url).encode('utf-8')
     sign = hmac.new(PRIVATE_KEY.encode('utf-8'), data, hashlib.sha256).digest()
     signB64 = base64.b64encode(sign).decode('utf-8')
-
     return signB64
 
 
 def get_current_time():
-    """Gets current time in Unix timestamp format."""
     return str(int(time.time()))
 
 
@@ -30,15 +32,16 @@ class MainView(APIView):
 
 
 class MonobankAuthAPIView(APIView):
+
+    def get(self, request):
+        return Response('Register with your Mono account!')
+
     def post(self, request):
         api_key_id = PRIVATE_KEY
+        print(api_key_id)
         callback_url = "https://api.monobank.ua/personal/auth/request"
-
         current_time = get_current_time()
-
-        permissions = "read_profile,read_transactions"
-
-        sign = generate_signature(current_time, permissions, callback_url)
+        sign = generate_signature(current_time, callback_url)
 
         headers = {
             "X-Key-Id": api_key_id,
@@ -52,4 +55,4 @@ class MonobankAuthAPIView(APIView):
         if response.status_code == 200:
             return Response(response.json())
         else:
-            return Response({"error": "Request failed"}, status=response.status_code)
+            return Response(response.json(), status=response.status_code)
